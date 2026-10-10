@@ -134,6 +134,31 @@
     .fieldrow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .staff-story { white-space: pre-wrap; overflow-wrap: anywhere; }
     summary { cursor: pointer; font-size: 16px; }
+
+    /* [+] CSS สำหรับการปริ้นออกรายงาน (PDF) */
+    @page { size: A4; margin: 15mm; }
+    @media print {
+      body * { visibility: hidden; }
+      header, footer, nav, button, .actions button, #loginPanel { display: none !important; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; background: white; color: black; font-family: 'Prompt', sans-serif; font-size: 11pt; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #printArea * { font-family: 'Prompt', sans-serif !important; }
+      #printArea h1 { font-size: 22pt; }
+      #printArea h2 { font-size: 16pt; }
+      #printArea h3 { font-size: 13pt; break-after: avoid; }
+      #printArea tr { break-inside: avoid; }
+      #printArea thead { display: table-header-group; }
+      .print-card { border: 1px solid #dce9e2; padding: 15px; margin-bottom: 15px; break-inside: avoid; border-radius: 8px; }
+      .print-header { text-align: center; border-bottom: 2px solid #23766d; padding-bottom: 20px; margin-bottom: 30px; }
+      .print-stats { display: flex; gap: 20px; margin-bottom: 30px; }
+      .print-stat-box { flex: 1; border: 1px solid #dce9e2; padding: 15px; text-align: center; border-radius: 8px; background: #f7fbf9; }
+      .print-stat-box h4 { margin: 0; font-size: 15px; color: #58716e; font-weight: normal; }
+      .print-stat-box span { font-size: 32px; font-weight: bold; color: #23766d; }
+      h1, h2, h3 { color: #183f43; }
+      table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+      table.data-table th, table.data-table td { padding: 10px; border-bottom: 1px solid #dce8e4; text-align: left; }
+      table.data-table th { background: #f4f8f5; }
+    }
     
     @media (max-width: 800px) {
       header { padding: 15px; flex-direction: column; align-items: flex-start; }
@@ -176,7 +201,7 @@
   <section id="publicPage">
     <div class="hero" style="max-width: 1220px; margin: 0 auto;">
       <div>
-        <div class="eyebrow">COMMUNITY VOICE • EVERY COMMUNITY</div>
+        <div class="eyebrow" id="currentMeetingLabel">COMMUNITY VOICE • EVERY COMMUNITY</div>
         <h1>เล่าให้ฟังหน่อย<br><span>บ้านเราเป็นยังไง?</span></h1>
         <p class="sub">เรื่องสุขภาพ สิ่งแวดล้อม ปากท้อง หรือชีวิตในชุมชน<br>เล่าเหมือนคุยกัน เราช่วยจับประเด็นให้อัตโนมัติและส่งขึ้นกระดานทันที</p>
       </div>
@@ -297,7 +322,7 @@
   <section id="votePage" class="hidden" style="max-width: 1220px; margin: 0 auto;">
     <div class="eyebrow">COMMUNITY QUEST • ช่วยกันเลือก</div>
     <h1>บ้านเราอยากเริ่มแก้เรื่องไหน?</h1>
-    <p class="sub">มีคนละ 3 ดาว ⭐ โหวตจากประเด็นที่อยู่ในหมวดหมู่ที่คนพูดถึงมากที่สุด 3 ลำดับแรก</p>
+    <p class="sub">มีคนละ 3 ดาว ⭐ เลือกจัดสรรครบ 3 ดาว แล้วกดส่งครั้งเดียว แบ่งให้หลายประเด็นหรือให้ประเด็นเดียวก็ได้</p>
     
     <div class="gameBanner">
       <div id="voteWallet">
@@ -315,13 +340,14 @@
       <button class="btnx secondary" id="refreshVotes">↻ อัปเดตผล</button>
     </div>
     
+    <button class="btnx secondary" id="resetVote">ล้างดาวที่เลือก</button>
     <div id="voteGrid" class="voteGrid"></div>
     
     <div class="gameBanner">
       <strong id="voteSelection">แตะประเด็นที่อยากให้บ้านเราช่วยกันแก้</strong>
       <div class="actions">
-        <span class="small">กดส่งครั้งละ 1 ดาว • ผลจะอัปเดตหลังบันทึกสำเร็จ</span>
-        <button id="sendVote" class="btnx" disabled>ส่งดาวของฉัน ⭐</button>
+        <span class="small">เลือกครบ 3 ดาว • แตะประเด็นเพื่อเพิ่มดาว • กดล้างเพื่อเลือกใหม่</span>
+        <button id="sendVote" class="btnx" disabled>ส่งครบ 3 ดาว ⭐⭐⭐</button>
       </div>
     </div>
   </section>
@@ -354,6 +380,7 @@
             <button id="viewListBtn" class="btnx">📋 จัดลำดับ/ตรวจแก้</button>
             <button id="viewBoardBtn" class="btnx secondary" style="background: white;">🗂️ ลากวางย้ายหมวด</button>
             <button id="viewCommBtn" class="btnx secondary" style="background: white;">🏘️ จัดการชุมชน</button>
+            <button id="viewMeetingBtn" class="btnx secondary" style="background: white;">🗓️ จัดการรอบประชุม & รายงาน</button> <!-- [+] ปุ่มใหม่ -->
           </div>
         </div>
       </div>
@@ -418,9 +445,29 @@
         </div>
       </div>
 
+      <!-- [+] Meeting & Report Management View สำหรับเจ้าหน้าที่ -->
+      <div id="staffMeetingView" class="hidden" style="max-width: 1000px; margin: 0 auto;">
+        <div class="cardx">
+          <h3>เปิดรอบการประชุมใหม่</h3>
+          <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
+            <input type="text" id="newMeetingName" placeholder="ชื่อการประชุม (เช่น ประจำเดือน ตุลาคม)" style="flex: 2; min-width: 200px;">
+            <input type="date" id="newMeetingDate" style="flex: 1; min-width: 150px;">
+            <button id="addMeetingBtn" class="btnx">เพิ่มรอบ</button>
+          </div>
+        </div>
+        
+        <div class="cardx" style="margin-top: 20px;">
+          <h3>รอบการประชุมทั้งหมด</h3>
+          <div id="meetingListArea" style="overflow-x: auto; margin-top: 15px;">กำลังโหลด...</div>
+        </div>
+      </div>
+
     </div>
   </section>
 </main>
+
+<!-- [+] พื้นที่สำหรับปริ้นรายงาน (ซ่อนไว้ปกติ จะแสดงเฉพาะตอนสั่ง Print) -->
+<div id="printArea" class="hidden"></div>
 
 <footer>
   <strong>เสียงบ้านเรา · ร่วมฟัง ร่วมคิด เพื่อสุขภาพชุมชน</strong><br>
@@ -444,6 +491,8 @@
   </div>
 </div>
 
+<div class="modal fade" id="qrModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="border-radius:22px"><div class="modal-header"><h5 class="modal-title">สแกนเพื่อร่วมประชุม</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><p id="qrTitle"></p><div id="qrCode" style="display:flex;justify-content:center;margin:20px"></div><input id="qrLink" readonly onclick="this.select()"><p class="small mt-3">สแกนเพื่อเล่าเรื่องและเลือกโหวต 3 ดาว</p></div></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // ============================================================================
@@ -451,6 +500,8 @@
   // ============================================================================
   window.GAS_URL = "https://script.google.com/macros/s/AKfycbxCgQu6y9A9KC2qbA7Sup-hoXL0kcSI9Zhp5vH-CpRo65al1GQf_xxkl5c2EiCf31oa/exec";
 
+  const injectedRound = "<?= initialRound ?>";
+  const requestedRound = new URLSearchParams(location.search).get("round") || (injectedRound.startsWith("<") ? "" : injectedRound);
   // Utilities
   const $ = id => document.getElementById(id);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -477,10 +528,13 @@
   });
 
   // ---------------------------------------------------------------------------
-  // ฟังก์ชันสื่อสารกับ Google Apps Script ผ่าน Fetch API (รองรับ GitHub Pages)
+  // ฟังก์ชันสื่อสารกับ Google Apps Script ผ่าน Fetch API
   // ---------------------------------------------------------------------------
   async function rpc(name, ...args) {
     try {
+      if (window.google && google.script && google.script.run) {
+        return await new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args));
+      }
       const response = await fetch(window.GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -513,8 +567,8 @@
       $('busy').classList.add('hidden');
       buttons.forEach((b, i) => b.disabled = disabled[i]);
       if(config) {
-        $('submitBtn').disabled = false;
-        if(selectedVote) $('sendVote').disabled = false;
+        $('submitBtn').disabled = !config.meetingOpen;
+        wallet();
       }
     }
   }
@@ -546,7 +600,7 @@
     $('step1').classList.remove('hidden'); $('receipt').classList.add('hidden'); 
   };
 
-  // Helper Labels - Check in full config list
+  // Helper Labels
   const catLabel = id => config?.categories.find(c => c.id === id)?.label || id;
   const comLabel = id => config?.communities.find(c => c.id === id)?.label || 'ไม่ระบุพื้นที่';
   function options(el, items) { items.forEach(x => el.add(new Option(x.label, x.id))); }
@@ -568,6 +622,7 @@
     
     requestId = newId();
     const r = await rpc('submitIssue', {
+      roundId: config.currentRoundId,
       requestId, story: $('story').value.trim(), communityId: $('community').value, place: $('place').value
     });
     
@@ -636,9 +691,7 @@
     notice('ถอดเสียงสำเร็จ');
   });
 
-  // --------------------------------------------------------
-  // ระบบจับเวลา (Timer) ในหน้ากระดาน
-  // --------------------------------------------------------
+  // Timer
   $('startTimerBtn').onclick = () => {
     const mins = parseInt($('timerInput').value, 10);
     if (isNaN(mins) || mins <= 0) return notice('กรุณาใส่เวลาเป็นนาทีที่ถูกต้อง');
@@ -661,7 +714,7 @@
       if (diff <= 0) {
         clearInterval(timerInterval);
         $('timerDisplay').textContent = "หมดเวลาโหวต!";
-        autoUpdateActive = false; // ปิดการอัปเดตอัตโนมัติเมื่อหมดเวลา
+        autoUpdateActive = false;
       } else {
         const m = Math.floor(diff / 60000);
         const s = Math.floor((diff % 60000) / 1000);
@@ -678,14 +731,12 @@
     autoUpdateActive = true; 
   };
 
-  // --------------------------------------------------------
-  // ระบบกระดานหน้าจอใหญ่ (Public Feed) - อ่านอย่างเดียว แสดงจำนวน
-  // --------------------------------------------------------
+  // Public Feed
   $('refreshFeedBtn').onclick = () => task(loadPublicFeed);
   
   async function loadPublicFeed() {
     $('publicFeedBoard').innerHTML = '<div class="empty">กำลังโหลดข้อมูล...</div>';
-    const feed = await rpc('getPublicFeed');
+    const feed = await rpc('getPublicFeed', config.currentRoundId);
     
     if (!config) return;
     
@@ -715,9 +766,7 @@
     $('publicFeedBoard').innerHTML = cols || '<div class="empty">ยังไม่มีเรื่องเล่าในขณะนี้</div>';
   }
 
-  // --------------------------------------------------------
   // Admin Section
-  // --------------------------------------------------------
   $('loginForm').onsubmit = e => {
     e.preventDefault();
     task(async () => {
@@ -736,25 +785,29 @@
     $('staffContent').classList.add('hidden');$('loginPanel').classList.remove('hidden');
   });
 
-  // View Toggles (List vs Board vs Comm)
+  // View Toggles
   function switchStaffView(view) {
-    ['staffListView', 'staffBoardView', 'staffCommView'].forEach(v => $(v).classList.add('hidden'));
-    ['viewListBtn', 'viewBoardBtn', 'viewCommBtn'].forEach(b => {
+    // [+] ซ่อน view ใหม่ด้วย
+    ['staffListView', 'staffBoardView', 'staffCommView', 'staffMeetingView'].forEach(v => $(v).classList.add('hidden'));
+    ['viewListBtn', 'viewBoardBtn', 'viewCommBtn', 'viewMeetingBtn'].forEach(b => {
       $(b).className = 'btnx secondary';$(b).style.background = 'white';
     });
     
-    $(view === 'list' ? 'staffListView' : view === 'board' ? 'staffBoardView' : 'staffCommView').classList.remove('hidden');
-    const activeBtn = $(view === 'list' ? 'viewListBtn' : view === 'board' ? 'viewBoardBtn' : 'viewCommBtn');
+    $(view === 'list' ? 'staffListView' : view === 'board' ? 'staffBoardView' : view === 'comm' ? 'staffCommView' : 'staffMeetingView').classList.remove('hidden');
+    const activeBtn = $(view === 'list' ? 'viewListBtn' : view === 'board' ? 'viewBoardBtn' : view === 'comm' ? 'viewCommBtn' : 'viewMeetingBtn');
     activeBtn.className = 'btnx';
     activeBtn.style.background = '';
 
     if (view === 'list') loadAdmin();
     if (view === 'board') renderStaffBoardView();
     if (view === 'comm') loadAdminCommunities();
+    if (view === 'meeting') loadAdminMeetings(); // [+] โหลดรอบประชุม
   }
 
   $('viewListBtn').onclick = () => switchStaffView('list');
-  $('viewBoardBtn').onclick = () => switchStaffView('board');$('viewCommBtn').onclick = () => switchStaffView('comm');
+  $('viewBoardBtn').onclick = () => switchStaffView('board');
+  $('viewCommBtn').onclick = () => switchStaffView('comm');
+  $('viewMeetingBtn').onclick = () => switchStaffView('meeting'); // [+] ปุ่มสลับหน้า
 
   function parseArray(s) { try { return JSON.parse(s); } catch { return []; } }
   
@@ -889,9 +942,7 @@
   });
   $('prev').onclick = () => task(async () => { if (adminPage > 0) { adminPage--; await loadAdmin(); } });$('next').onclick = () => task(async () => { if (records.length === 30) { adminPage++; await loadAdmin(); } });
 
-  // --------------------------------------------------------
-  // ระบบ Drag and Drop สำหรับบอร์ดของเจ้าหน้าที่ (Kanban)
-  // --------------------------------------------------------
+  // Kanban
   function renderStaffBoardView() {
     const cols = config.categories.map(c => {
       const items = records.filter(r => r.main_category === c.id);
@@ -948,9 +999,7 @@
     });
   };
 
-  // --------------------------------------------------------
-  // ระบบจัดการชุมชน/หมู่บ้าน (Community Management)
-  // --------------------------------------------------------
+  // Community Management
   $('refreshCommBtn').onclick = () => task(loadAdminCommunities);
   
   async function loadAdminCommunities() {
@@ -1006,110 +1055,243 @@
     await refreshGlobalDropdowns();
   });
 
-  // อัปเดต Dropdown ในระบบทันที
   async function refreshGlobalDropdowns() {
-    config = await rpc('getBootstrap');
+    config = await rpc('getBootstrap', requestedRound);
     const activeComms = config.communities.filter(c => c.active);
-    
     $('community').innerHTML = '<option value="">ยังไม่ระบุ</option>';
     $('filterCommunity').innerHTML = '<option value="">ทุกพื้นที่</option>';
-    
     options($('community'), activeComms);
     options($('filterCommunity'), activeComms);
+    // อัปเดตชื่อรอบการประชุมหน้าแรกด้วย
+    if($('currentMeetingLabel'))$('currentMeetingLabel').textContent = '📍 ขณะนี้เปิดรับฟัง: ' + config.currentMeetingName;
   }
 
-  // --------------------------------------------------------
-  // Voting Section
-  // --------------------------------------------------------
-  let voterId = '', votesLeft = 0, selectedVote = '', voteRequest = '', liveBusy = false, liveBoard = null;
-  
-  function getLocalVoterId() {
-    let vid = localStorage.getItem('cv_voter_id');
-    if (!vid) {
-      vid = newId();
-      localStorage.setItem('cv_voter_id', vid);
-      localStorage.setItem('cv_votes_left', '3');
+  // ---------------------------------------------------------------------------
+  // [+] ระบบจัดการรอบการประชุม (Meetings) และ PDF Report
+  // ---------------------------------------------------------------------------
+  async function loadAdminMeetings() {
+    $('meetingListArea').innerHTML = '<div class="empty">กำลังโหลด...</div>';
+    const meetings = await rpc('getAdminMeetings', token);
+    
+    $('meetingListArea').innerHTML = `
+      <table class="comm-table" style="background: white;">
+        <tr>
+          <th>รหัสรอบ</th>
+          <th>ชื่อการประชุม</th>
+          <th>วันที่บันทึก</th>
+          <th>สถานะ</th>
+          <th style="text-align:right;">การจัดการ</th>
+        </tr>
+        ${meetings.map(m => {
+          const isActive = String(m.is_active).toLowerCase() === 'true';
+          return `
+            <tr>
+              <td class="small">${esc(m.round_id)}</td>
+              <td><strong>${esc(m.meeting_name)}</strong></td>
+              <td>${esc(m.meeting_date)}</td>
+              <td>
+                ${isActive ? '<span class="tag" style="background:#e4f6ed; color:#23766d; border: 1px solid #9acdb7;">เปิดรับข้อมูล (Active)</span>' : '<span class="tag auto">ปิด</span>'}
+              </td>
+              <td style="text-align:right;">
+                ${isActive ? `<button class="btnx secondary" style="padding:6px 12px;font-size:14px" onclick="closeRound('${esc(m.round_id)}')">ปิดรับข้อมูล</button>` : ''}
+                ${!isActive ? `<button class="btnx secondary" style="padding: 6px 12px; font-size:14px;" onclick="setActiveRound('${esc(m.round_id)}')">เซ็ตเป็นรอบปัจจุบัน</button>` : ''}
+                <button class="btnx secondary" style="padding:6px 12px;font-size:14px" onclick="showMeetingQr('${esc(m.round_id)}')">📱 QR เข้าร่วม</button>
+                <button class="btnx" style="padding:6px 12px;font-size:14px" onclick="downloadMeetingPdf('${esc(m.round_id)}')">⬇ PDF</button>
+                <button class="btnx" style="padding: 6px 12px; font-size:14px; margin-left: 5px;" onclick="generateReport('${esc(m.round_id)}')">📄 พิมพ์รายงาน</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </table>
+    `;
+  }
+
+  $('addMeetingBtn').onclick = () => task(async () => {
+    const name = $('newMeetingName').value.trim();
+    const date = $('newMeetingDate').value;
+    if(!name || !date) throw new Error('กรุณาระบุชื่อและวันที่ให้ครบถ้วน');
+    
+    await rpc('addMeeting', token, name, date);
+    $('newMeetingName').value = '';$('newMeetingDate').value = '';
+    await loadAdminMeetings();
+    notice('สร้างรอบการประชุมใหม่เรียบร้อย');
+  });
+
+  window.setActiveRound = (id) => task(async () => {
+    await rpc('setActiveMeeting', token, id);
+    await loadAdminMeetings();
+    await refreshGlobalDropdowns(); // อัปเดตให้หน้าสาธารณะเปลี่ยนรอบตามด้วย
+    notice('เปลี่ยนรอบการประชุมปัจจุบันเรียบร้อยแล้ว');
+  });
+
+  // ฟังก์ชันวาดรายงานและสั่ง Print (PDF)
+  window.generateReport = (roundId) => task(async () => {
+    $('printArea').innerHTML = '<div style="text-align:center; margin-top:50px;"><h2>กำลังจัดเตรียมข้อมูลรายงาน...</h2></div>';
+    $('printArea').classList.remove('hidden');
+    
+    try {
+      const data = await rpc('getReportData', token, roundId);
+      
+      let html = `
+        <div class="print-header">
+          <h1 style="margin-bottom: 5px;">รายงานสรุปผลการรับฟังเสียงชุมชน</h1>
+          <h2 style="margin-top: 0; color: #58716e;">${esc(data.meeting.meeting_name)}</h2>
+          <p>วันที่ลงพื้นที่/จัดกิจกรรม: ${esc(data.meeting.meeting_date)} | ข้อมูล ณ วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</p>
+        </div>
+        
+        <div class="print-stats">
+          <div class="print-stat-box">
+            <h4>จำนวนเรื่องที่เสนอ</h4>
+            <span>${data.stats.totalIssues}</span>
+          </div>
+          <div class="print-stat-box">
+            <h4>อุปกรณ์ที่ลงคะแนน</h4>
+            <span>${data.stats.voters}</span>
+          </div>
+          <div class="print-stat-box">
+            <h4>จำนวนดาว (โหวต) รวม</h4>
+            <span>${data.stats.totalVotes}</span>
+          </div>
+        </div>
+
+        <h3 style="border-left: 4px solid #23766d; padding-left: 10px;">หมวดหมู่ปัญหาและข้อเสนอที่มีคนพูดถึงมากที่สุด (Top 5)</h3>
+        <table class="data-table">
+          <tr>
+            <th style="width: 10%; text-align:center;">ลำดับ</th>
+            <th>หมวดหมู่</th>
+            <th style="width: 20%; text-align:center;">จำนวนเรื่อง (เคส)</th>
+          </tr>
+          ${data.topCategories.length > 0 ? 
+            data.topCategories.map((c, i) => `
+              <tr>
+                <td style="text-align:center;">${i+1}</td>
+                <td><strong>${esc(c.label)}</strong></td>
+                <td style="text-align:center;">${c.count}</td>
+              </tr>
+            `).join('') : '<tr><td colspan="3" style="text-align:center;">ไม่มีข้อมูลในรอบนี้</td></tr>'
+          }
+        </table>
+
+        <h3 style="border-left: 4px solid #23766d; padding-left: 10px; margin-top: 40px;">ประเด็นที่ได้รับความสนใจสูง / จัดลำดับความสำคัญ (ทุกประเด็น)</h3>
+        ${data.topIssues.length > 0 ? 
+          data.topIssues.map((issue, i) => `
+            <div class="print-card">
+              <strong style="font-size: 18px; color:#183f43;">อันดับ ${issue.rank}. หมวด: ${esc(issue.category)}</strong><br>
+              <p style="margin: 12px 0; font-size: 16px; line-height: 1.6;">"${esc(issue.text)}"</p>
+              <div style="color: #65817e; font-size: 14px; border-top: 1px dashed #dce8e4; padding-top: 10px;">
+                📍 พื้นที่: ${esc(issue.community)} &nbsp;|&nbsp; 
+                ⭐ ได้รับโหวต: <strong>${issue.votes}</strong> ดาว &nbsp;|&nbsp; 
+                📊 ระดับความสำคัญโดยเจ้าหน้าที่: <strong>${issue.priority || 'ยังไม่ได้ประเมิน'}</strong>
+                <table class="data-table" style="margin-top:12px;font-size:11pt">
+                ${[['สุขภาพ',issue.health],['สิ่งแวดล้อม',issue.environment],['เศรษฐกิจ',issue.economic],['สังคม',issue.social],['ข้อเสนอการช่วยเหลือ',issue.support]].map(([label,value]) => `<tr><td style="width:25%;font-weight:600">${label}</td><td>${esc(value || 'ยังไม่มีข้อมูล')}</td></tr>`).join('')}</table>
+              </div>
+            </div>
+          `).join('') : '<p>ไม่มีประเด็นในรอบการประชุมนี้</p>'
+        }
+        
+        <div style="margin-top: 30px; text-align: center; color: #8fa8a2; font-size: 14px;">-- สิ้นสุดรายงาน --</div>
+      `;
+      
+      $('printArea').innerHTML = html;
+      
+      if (document.fonts) await document.fonts.ready;
+      // หน่วงเวลาเล็กน้อยให้หน้าจอ Render เสร็จแล้วเรียกหน้าต่าง Print
+      setTimeout(() => {
+        window.print();
+        $('printArea').classList.add('hidden'); 
+      }, 800);
+
+    } catch (e) {
+      notice('เกิดข้อผิดพลาดในการดึงข้อมูลรายงาน: ' + e.message);
+      $('printArea').classList.add('hidden');
     }
-    return vid;
+  });
+
+
+  // Allocate exactly three stars, submit one atomic ballot.
+  let voterId = '', votesLeft = 3, selectedVote = '', voteRequest = '', liveBusy = false, liveBoard = null;
+  let voteChoices = [], ballotRound = '';
+  function getLocalVoterId() {
+    try {
+      let id = localStorage.getItem('cv_voter_id');
+      if (!id) { id = newId(); localStorage.setItem('cv_voter_id', id); }
+      return id;
+    } catch (e) { return voterId || newId(); }
   }
-  
-  function showVote() {
-    voterId = getLocalVoterId();
-    votesLeft = parseInt(localStorage.getItem('cv_votes_left') || '3', 10);
-    wallet();
-    refreshBoard();
-  }
-  
+  function showVote() { voterId = getLocalVoterId(); refreshBoard(); }
   async function refreshBoard() {
     if (liveBusy || !config) return;
     liveBusy = true;
     try {
-      liveBoard = await rpc('getLiveBoard');
-      renderBoard();
-      $('liveInfo').innerHTML = `อัปเดต ${new Date(liveBoard.updatedAt).toLocaleTimeString('th-TH')} • ผู้เข้าร่วมโหวต ${liveBoard.totals.participants} คน<br><span style="color:#258578">คัดเรื่องจาก 3 หมวดหมู่ที่มีคนพูดถึงมากที่สุด ได้แก่: ${liveBoard.top3Categories.map(catLabel).join(', ')}</span>`;
-    } catch (e) {
-      $('liveInfo').textContent = 'อัปเดตไม่ได้ กดอัปเดตผลเพื่อลองอีกครั้ง';
-    } finally {
-      liveBusy = false;
-    }
+      liveBoard = await rpc('getLiveBoard', config.currentRoundId, voterId || getLocalVoterId());
+      if (ballotRound !== liveBoard.round) { voteChoices = []; voteRequest = ''; ballotRound = liveBoard.round; }
+      votesLeft = liveBoard.remaining;
+      if (!votesLeft) voteChoices = [];
+      const eligible = new Set(liveBoard.boardIssues.map(i => i.id));
+      if (voteChoices.some(id => !eligible.has(id))) { voteChoices = []; voteRequest = ''; }
+      renderBoard(); wallet();
+      $('liveInfo').textContent = 'อัปเดต ' + new Date(liveBoard.updatedAt).toLocaleTimeString('th-TH') + ' • อุปกรณ์ที่ลงคะแนน ' + liveBoard.totals.participants + ' • ดาวรวม ' + liveBoard.totals.votes;
+    } catch (e) { $('liveInfo').textContent = e.message; }
+    finally { liveBusy = false; }
   }
-  
   function renderBoard() {
-    if (!config || !liveBoard) return;
+    if (!liveBoard) return;
     const total = Math.max(1, liveBoard.totals.votes);
-    
-    $('voteGrid').innerHTML = liveBoard.boardIssues.map((issue, i) => {
+    $('voteGrid').innerHTML = liveBoard.boardIssues.map(issue => {
+      const count = voteChoices.filter(id => id === issue.id).length;
       const n = liveBoard.totals.issues[issue.id] || 0;
-      const text = issue.text.length > 90 ? issue.text.substring(0, 90) + '...' : issue.text;
-      const catText = catLabel(issue.category);
-      return `
-        <button class="voteCard ${selectedVote === issue.id ? 'chosen' : ''}" data-vote="${esc(issue.id)}" aria-pressed="${selectedVote === issue.id}">
-          <span class="tag auto" style="background:#e5f5eb; color:#23766d;">${esc(catText)}</span>
-          <span class="voteIcon" aria-hidden="true" style="margin-top:25px;">💬</span>
-          <strong>${esc(text)}</strong>
-          <span class="voteCount">${n} ดาว · ${Math.round(n / total * 100)}%</span>
-          <div class="bar"><i style="width:${n / total * 100}%"></i></div>
-        </button>
-      `;
-    }).join('') || '<p class="empty" style="grid-column: 1 / -1; font-size:18px;">ยังไม่มีประเด็นที่รวบรวมได้ในขณะนี้ รอชุมชนเล่าเรื่องเข้ามาก่อนนะ</p>';
-    
-    document.querySelectorAll('[data-vote]').forEach(b => {
-      b.onclick = () => {
-        if (busy) return;
-        selectedVote = b.dataset.vote;
-        voteRequest = '';
-        $('voteSelection').textContent = 'เลือกลงคะแนนให้ประเด็นนี้';
-        $('sendVote').disabled = false;
-        renderBoard();
-      };
+      return `<button class="voteCard ${count ? 'chosen' : ''}" data-vote="${esc(issue.id)}" aria-pressed="${!!count}">
+        <span class="tag auto">${esc(catLabel(issue.category))}</span><span class="voteIcon" style="margin-top:25px">💬</span>
+        <strong>${esc(issue.text)}</strong><span class="voteCount">${n} ดาว · ${Math.round(n / total * 100)}%</span>
+        <span>${count ? 'เลือกแล้ว ' + '⭐'.repeat(count) : 'แตะเพื่อเพิ่มดาว'}</span><div class="bar"><i style="width:${n/total*100}%"></i></div></button>`;
+    }).join('') || '<p class="empty">ยังไม่มีประเด็นในรอบนี้</p>';
+    document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => {
+      if (busy || !votesLeft || !liveBoard.meetingOpen) return;
+      if (voteChoices.length >= 3) return notice('ครบ 3 ดาวแล้ว กดส่ง หรือกดล้างเพื่อเลือกใหม่');
+      voteChoices.push(b.dataset.vote); voteRequest = ''; renderBoard(); wallet();
     });
   }
-  
   function wallet() {
-    $('gems').textContent = '⭐'.repeat(votesLeft) + '☆'.repeat(3 - votesLeft);$('remaining').textContent = votesLeft ? 'เหลือ ' + votesLeft + ' ดาว' : 'ส่งครบแล้ว ขอบคุณที่ช่วยกันเลือก!';
+    const count = voteChoices.length;
+    $('gems').textContent = votesLeft ? '⭐'.repeat(count) + '☆'.repeat(3-count) : '⭐⭐⭐';
+    $('remaining').textContent = !votesLeft ? 'ส่งคะแนนรอบนี้แล้ว ขอบคุณค่ะ' : 'เลือกแล้ว ' + count + '/3 ดาว';
+    $('voteSelection').textContent = liveBoard && !liveBoard.meetingOpen ? 'รอบนี้ปิดรับคะแนนแล้ว' : 'จัดสรรครบ 3 ดาวแล้วกดส่ง';
+    $('sendVote').disabled = busy || !votesLeft || count !== 3 || !liveBoard || !liveBoard.meetingOpen;
+    $('resetVote').disabled = busy || !votesLeft || count === 0;
   }
-  
+  $('resetVote').onclick = () => { voteChoices = []; voteRequest = ''; renderBoard(); wallet(); };
   $('sendVote').onclick = () => task(async () => {
-    if (!selectedVote) throw new Error('แตะเลือกประเด็นที่อยากโหวตก่อน');
-    if (votesLeft < 1) throw new Error('คุณใช้โควตาครบ 3 ดาวแล้ว ขอบคุณที่ร่วมกิจกรรม');
+    if (voteChoices.length !== 3) throw new Error('กรุณาเลือกครบ 3 ดาว');
     if (!voteRequest) voteRequest = newId();
-    
-    const r = await rpc('castVote', { voterId: voterId, issueId: selectedVote, requestId: voteRequest });
-    votesLeft = r.remaining;
-    localStorage.setItem('cv_votes_left', votesLeft.toString());
-    voteRequest = '';
-    $('sendVote').disabled = true;
-    selectedVote = '';
-    wallet();
-    await refreshBoard();
-    notice(votesLeft ? 'ส่งดาวให้ประเด็นนี้แล้ว! เหลืออีก ' + votesLeft + ' ดาว' : '🎉 ส่งครบ 3 ดาวแล้ว ขอบคุณที่ช่วยกันดูแลบ้านเรา');
+    await rpc('castVote', { roundId: config.currentRoundId, voterId, issueIds: voteChoices.slice(), requestId: voteRequest });
+    votesLeft = 0; voteChoices = []; voteRequest = ''; await refreshBoard(); wallet();
+    notice('ส่งครบ 3 ดาวแล้ว ขอบคุณที่ร่วมเลือกปัญหาชุมชน');
   });
-  
   $('refreshVotes').onclick = () => refreshBoard();
-  
+
+
+  window.closeRound = id => task(async () => {
+    await rpc('closeMeeting', token, id); await loadAdminMeetings(); notice('ปิดรับข้อมูลรอบนี้แล้ว');
+  });
+  window.showMeetingQr = id => task(async () => {
+    const data = await rpc('getMeetingLink', token, id);
+    $('qrTitle').textContent = data.meeting.meeting_name + ' • ' + data.meeting.meeting_date;
+    $('qrLink').value = data.url; $('qrCode').innerHTML = '';
+    if (!window.QRCode) throw new Error('โหลดตัวสร้าง QR ไม่สำเร็จ กรุณารีเฟรช');
+    new QRCode($('qrCode'), { text: data.url, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+    bootstrap.Modal.getOrCreateInstance($('qrModal')).show();
+  });
+  window.downloadMeetingPdf = id => task(async () => {
+    const result = await rpc('exportMeetingPdf', token, id);
+    const bytes = Uint8Array.from(atob(result.base64), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], {type:'application/pdf'}));
+    const a = document.createElement('a'); a.href = url; a.download = result.filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  });
+
   // Auto-refresh features 
   setInterval(() => {
-    if (!autoUpdateActive) return; // หยุดรีเฟรชถ้าหมดเวลาที่ตั้งไว้
+    if (!autoUpdateActive) return; 
     
     if (!document.hidden && !$('votePage').classList.contains('hidden') && !busy) refreshBoard();
     if (!document.hidden && !$('feedPage').classList.contains('hidden') && !busy) loadPublicFeed();
@@ -1117,17 +1299,18 @@
   
   // Init
   task(async () => {
-    config = await rpc('getBootstrap');
+    config = await rpc('getBootstrap', requestedRound);
     $('appName').textContent = config.appName;
     document.title = config.appName + ' | ชุมชน';
     
-    // โหลดเฉพาะชุมชนที่เปิดใช้งาน (active) ลงใน Dropdown
+    if($('currentMeetingLabel'))$('currentMeetingLabel').textContent = '📍 ขณะนี้เปิดรับฟัง: ' + config.currentMeetingName;
+
     const activeComms = config.communities.filter(c => c.active);
     options($('community'), activeComms);
     options($('filterCommunity'), activeComms);
     
     config.statuses.forEach(s => $('filterStatus').add(new Option(s)));$('connection').textContent = '● เชื่อมต่อฐานข้อมูลแล้ว';
-    $('submitBtn').disabled = false;
+    $('submitBtn').disabled = !config.meetingOpen;
   }).catch(() => {
     $('connection').textContent = 'เชื่อมต่อไม่สำเร็จ กรุณาตรวจสอบลิงก์ Web App (GAS_URL)';
   });
